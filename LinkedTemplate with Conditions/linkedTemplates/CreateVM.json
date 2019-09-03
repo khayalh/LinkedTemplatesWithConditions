@@ -1,0 +1,89 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "VirtualMachineName": {
+      "type": "string"
+    },
+    "vmAdminUsername": {
+      "type": "string"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmWindowsOSVersion": {
+      "type": "string"
+    },
+    "nicID": {
+      "type": "string"
+    },
+    "VMOSDiskType": {
+      "type": "string",
+      "allowedValues": [
+        "vhd",
+        "managedDisk"
+      ]
+    },
+    "storageAccountName": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "VmSize": "Standard_D2_v2",
+    "vmImagePublisher": "MicrosoftWindowsServer",
+    "vmImageOffer": "WindowsServer",
+    "vmOSDiskName": "OSDisk",
+    "vmStorageAccountContainerName": "vhds",
+    "managedDisk": {
+      "storageAccountType": "StandardSSD_LRS"
+    },
+    "vhd" : {
+      "uri": "[concat('http://',parameters('storageAccountName'),'.blob.core.windows.net/',variables('vmStorageAccountContainerName'),'/',variables('vmOSDiskName'), '.vhd')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('VirtualMachineName')]",
+      "type": "Microsoft.Compute/virtualMachines",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-03-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "VirtualMachine"
+      },
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[variables('VmSize')]"
+        },
+        "osProfile": {
+          "computerName": "[parameters('VirtualMachineName')]",
+          "adminUsername": "[parameters('vmAdminUsername')]",
+          "adminPassword": "[parameters('vmAdminPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "[variables('vmImagePublisher')]",
+            "offer": "[variables('vmImageOffer')]",
+            "sku": "[parameters('vmWindowsOSVersion')]",
+            "version": "latest"
+          },
+          "osDisk": {
+            "name": "vm1OSDisk",
+            "vhd": "[if(equals(parameters('VMOSDiskType'), 'vhd'), variables('vhd'), json('null'))]",
+            "managedDisk": "[if(equals(parameters('VMOSDiskType'), 'managedDisk'), variables('managedDisk'), json('null'))]",
+            "caching": "ReadWrite",
+            "createOption": "FromImage"
+          }
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[parameters('nicID')]"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

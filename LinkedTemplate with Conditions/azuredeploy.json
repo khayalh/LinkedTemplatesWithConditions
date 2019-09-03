@@ -1,0 +1,268 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deployPublicIP": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ]
+    },
+    "nicName": {
+      "type": "string",
+      "minLength": 1,
+      "defaultValue": "nic"
+    },
+    "pipName": {
+      "type": "string",
+      "defaultValue": "pip"
+    },
+    "pipDnsName": {
+      "type": "string",
+      "defaultValue": "pipdns"
+    },
+    "_artifactsLocation": {
+      "type": "string",
+      "metadata": {
+        "description": "Auto-generated container in staging storage account to receive post-build staging folder upload"
+      }
+    },
+    "_artifactsLocationSasToken": {
+      "type": "securestring",
+      "metadata": {
+        "description": "Auto-generated token to access _artifactsLocation"
+      }
+    },
+    "IPAllocationMethod": {
+      "type": "string",
+      "defaultValue": "Dynamic",
+      "allowedValues": [
+        "Dynamic",
+        "Static"
+      ]
+    },
+    "virtualNetworkName": {
+      "type": "string",
+      "defaultValue": "vnet"
+    },
+    "vnetPrefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/16"
+    },
+    "vnetSubnet1Name": {
+      "type": "string",
+      "defaultValue": "Subnet1"
+    },
+    "vnetSubnet1Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.0.0/24"
+    },
+    "vnetSubnet2Name": {
+      "type": "string",
+      "defaultValue": "Subnet2"
+    },
+    "vnetSubnet2Prefix": {
+      "type": "string",
+      "defaultValue": "10.0.1.0/24"
+    },
+    "VirtualMachineName": {
+      "type": "string",
+      "defaultValue": "vm"
+    },
+    "vmAdminUsername": {
+      "type": "string",
+      "defaultValue": "vmadm"
+    },
+    "vmAdminPassword": {
+      "type": "securestring"
+    },
+    "vmWindowsOSVersion": {
+      "type": "string",
+      "defaultValue": "2016-Datacenter",
+      "allowedValues": [
+        "2008-R2-SP1",
+        "2012-Datacenter",
+        "2012-R2-Datacenter",
+        "2016-Datacenter"
+      ]
+    },
+    "storageAccountName": {
+      "type": "string",
+      "defaultValue": "sa"
+    },
+    "storageAccountType": {
+      "type": "string",
+      "defaultValue": "Standard_LRS",
+      "allowedValues": [
+        "Standard_LRS",
+        "Standard_ZRS",
+        "Standard_GRS",
+        "Standard_RAGRS",
+        "Premium_LRS"
+      ]
+    },
+    "VMOSDiskType": {
+      "type": "string",
+      "defaultValue": "vhd",
+      "allowedValues": [
+        "vhd",
+        "managedDisk"
+      ]
+    }
+  },
+  "variables": {},
+  "resources": [
+    {
+      "name": "CreateNIC",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "CreateVNET",
+        "CreatePublicIP"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/linkedTemplates/', 'CreateNIC.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "nicName": {
+            "value": "[parameters('nicName')]"
+          },
+          "subnetID": {
+            "value": "[reference('CreateVNET').outputs.subnet1.value]"
+          },
+          "deployPublicIP": {
+            "value": "[parameters('deployPublicIP')]"
+          },
+          "IPAllocationMethod": {
+            "value": "[parameters('IPAllocationMethod')]"
+          },
+          "publicIPID": {
+            "value": "[if(equals(parameters('deployPublicIP'), 'yes'), reference('CreatePublicIP').outputs.publicip.value, '')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('deployPublicIP'), 'yes')]",
+      "name": "CreatePublicIP",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/linkedTemplates/', 'CreatePublicIP.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "pipDnsName": {
+            "value": "[parameters('pipDnsName')]"
+          },
+          "IPAllocationMethod": {
+            "value": "[parameters('IPAllocationMethod')]"
+          },
+          "pipName": {
+            "value": "[parameters('pipName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "CreateVNET",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/linkedTemplates/', 'CreateVNET.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "vnetPrefix": {
+            "value": "[parameters('vnetPrefix')]"
+          },
+          "vnetSubnet1Name": {
+            "value": "[parameters('vnetsubnet1Name')]"
+          },
+          "vnetSubnet1Prefix": {
+            "value": "[parameters('vnetSubnet1Prefix')]"
+          },
+          "vnetSubnet2Name": {
+            "value": "[parameters('vnetSubnet2Name')]"
+          },
+          "vnetSubnet2Prefix": {
+            "value": "[parameters('vnetSubnet2Prefix')]"
+          },
+          "virtualNetworkName": {
+            "value": "[parameters('virtualNetworkName')]"
+          }
+        }
+      }
+    },
+    {
+      "name": "CreateVM",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [
+        "CreateStorage",
+        "CreateNIC"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/linkedTemplates/', 'CreateVM.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "VirtualMachineName": {
+            "value": "[parameters('VirtualMachineName')]"
+          },
+          "nicID": {
+            "value": "[reference('CreateNIC').outputs.nic.value]"
+          },
+          "vmAdminUsername": {
+            "value": "[parameters('vmAdminUsername')]"
+          },
+          "vmAdminPassword": {
+            "value": "[parameters('vmAdminPassword')]"
+          },
+          "vmWindowsOSVersion": {
+            "value": "[parameters('vmWindowsOSVersion')]"
+          },
+          "VMOSDiskType": {
+            "value": "[parameters('VMOSDiskType')]"
+          },
+          "storageAccountName": {
+            "value": "[if(equals(parameters('VMOSDiskType'), 'vhd'), reference('CreateStorage').outputs.storage.value, '')]"
+          }
+        }
+      }
+    },
+    {
+      "condition": "[equals(parameters('VMOSDiskType'), 'vhd')]",
+      "name": "CreateStorage",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2016-09-01",
+      "dependsOn": [],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "[concat(parameters('_artifactsLocation'), '/linkedTemplates/', 'CreateStorage.json', parameters('_artifactsLocationSasToken'))]",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "storageAccountName": {
+            "value": "[parameters('storageAccountName')]"
+          },
+          "storageAccountType": {
+            "value": "[parameters('storageAccountType')]"
+          }
+        }
+      }
+    }
+  ],
+  "outputs": {}
+}

@@ -1,0 +1,42 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "pipDnsName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "pipName": {
+      "type": "string"
+    },
+    "IPAllocationMethod": {
+      "type": "string"
+    }
+  },
+  "variables": {
+  },
+  "resources": [
+    {
+      "name": "[parameters('pipName')]",
+      "type": "Microsoft.Network/publicIPAddresses",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "PublicIP"
+      },
+      "properties": {
+        "publicIPAllocationMethod": "[parameters('IPAllocationMethod')]",
+        "dnsSettings": {
+          "domainNameLabel": "[parameters('pipDnsName')]"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "publicip": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/publicIPAddresses', parameters('pipName'))]"
+    }
+  }
+}

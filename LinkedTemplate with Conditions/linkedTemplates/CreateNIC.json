@@ -1,0 +1,63 @@
+﻿{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "nicName": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deployPublicIP": {
+      "type": "string",
+      "allowedValues": [
+        "yes",
+        "no"
+      ]
+    },
+    "publicIPID": {
+      "type": "string"
+    },
+    "IPAllocationMethod": {
+      "type": "string"
+    },
+    "SubnetID": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "publicIPAddress": {
+      "id": "[parameters('publicIPID')]"
+    }
+  },
+  "resources": [
+    {
+      "name": "[parameters('nicName')]",
+      "type": "Microsoft.Network/networkInterfaces",
+      "location": "[resourceGroup().location]",
+      "apiVersion": "2019-06-01",
+      "dependsOn": [],
+      "tags": {
+        "displayName": "networkInterfaces"
+      },
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "[parameters('IPAllocationMethod')]",
+              "subnet": {
+                "id": "[parameters('SubnetID')]"
+              },
+              "publicIPAddress": "[if(equals(parameters('deployPublicIP'), 'yes'), variables('publicIPAddress'), json('null'))]"
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "nic": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Network/networkInterfaces', parameters('nicName'))]"
+    }
+  }
+}

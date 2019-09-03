@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "deployPublicIP": {
+      "value": "yes"
+    },
+    "virtualNetworkName": {
+      "value": "myvnet"
+    },
+    "pipName": {
+      "value": "mypip"
+    },
+    "pipDnsName": {
+      "value": "mypipdns"
+    },
+    "nicName": {
+      "value": "mynic"
+    },
+    "VirtualMachineName": {
+      "value": "myvm"
+    },
+    "vmAdminUsername": {
+      "value": "myvmadm"
+    },
+    "vmAdminPassword": {
+      "value": "A123456a"
+    },
+    "storageAccountName": {
+      "value": "mysa"
+    },
+    "VMOSDiskType": {
+      "value": "vhd"
+    }
+  }
+}
